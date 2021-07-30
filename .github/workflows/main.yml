@@ -60,7 +60,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: githubregistrydemo/dotnethelloworld
+          images: ${{ github.actor }}/dotnethelloworld
 
       - name: Install buildx
         uses: docker/setup-buildx-action@v1
@@ -72,6 +72,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
