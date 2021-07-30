@@ -60,7 +60,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: name/app
+          images: githubregistrydemo/dotnethelloworld
+
+      - name: docker/setup-buildx-action@v1
+        id: buildx
+        with:
+          install: true
 
       - name: Build and push docker image
         uses: docker/build-push-action@v2
