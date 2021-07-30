@@ -1,36 +1,70 @@
-# This is a basic workflow to help you get started with Actions
+name: Build and Add to Registry
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [main]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  AzureBicepDeploy:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    env:
+      ResourceGroupName: rg-myci-githubregistry
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDS }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Build Bicep File
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          az bicep build --file infrastructure/azure.bicep
+
+      - name: Create Resource Group
+        uses: Azure/CLI@v1
+        with:
+          inlineScript: |
+            az group create --name ${{ env.ResourceGroupName }} --location westeurope
+
+      - name: Deploy Bicep File
+        uses: Azure/arm-deploy@v1
+        with:
+          resourceGroupName: ${{ env.ResourceGroupName }}
+          subscriptionId: ${{ secrets.SUBSCRIPTION_ID }}
+          template: infrastructure/azure.json
+
+  BuildAndPush:
+    runs-on: windows-latest
+    env:
+      Configuration: Release
+      Registry: ghcr.io
+      Repository: ${{ github.repository }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: dotnet build
+        run: dotnet build --configuration ${{ env.Configuration }}
+        shell: pwsh
+
+      - name: Login to the container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.Registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Docker meta (tags and labels)
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: name/app
+
+      - name: Build and push docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
