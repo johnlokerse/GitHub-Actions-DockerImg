@@ -15,6 +15,7 @@ resource mykv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
       family: 'A'
     }
     tenantId: subscription().tenantId
+    accessPolicies: []
   }
 }
 
