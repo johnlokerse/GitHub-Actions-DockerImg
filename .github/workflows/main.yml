@@ -36,7 +36,7 @@ jobs:
           template: infrastructure/azure.json
 
   BuildAndPush:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       Configuration: Release
       Registry: ghcr.io
