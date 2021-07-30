@@ -1,5 +1,5 @@
 resource myci 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
-  name: 'githubregistry-ci-demo'
+  name: 'githubregistrycidemo'
   sku: {
     name: 'Basic'
   }
@@ -7,7 +7,7 @@ resource myci 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
 }
 
 resource mykv 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
-  name: 'githubregistry-kv-demo'
+  name: 'githubregistrykvdemo'
   location: 'westeurope'
   properties: {
     sku: {
